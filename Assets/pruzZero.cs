@@ -1,0 +1,261 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using KModkit;
+using System.Text.RegularExpressions;
+
+public class pruzZero : MonoBehaviour {
+	public KMAudio audio;
+	public KMBombModule module;
+	static int moduleIdCounter = 1;
+	int moduleId;
+	private bool moduleSolved;
+
+	// Use this for initialization
+	public TextMesh[] screen;
+	public KMSelectable[] keypad;
+	public KMSelectable submit;
+	public KMSelectable clear;
+
+	private Color[] textColors =
+	{
+		Color.green,
+		Color.cyan,
+		Color.magenta,
+		new Color(1f, 0.6f, 0f)
+	};
+	private string colorOrder = "GCMO";
+	private int[][] table =
+	{
+		new int[]{3, 2, 1, 0, 8, 2, 3, 8, 1},
+		new int[]{1, 3, 5, 9, 7, 5, 4, 9, 0},
+		new int[]{9, 7, 0, 4, 9, 6, 9, 5, 0},
+		new int[]{4, 5, 3, 2, 1, 2, 2, 7, 8}
+	};
+	private int TPscore;
+	private bool isSubmit;
+	private string submitScreen;
+	private string number;
+	private string colors;
+	private string solution;
+	void Awake()
+	{
+		moduleId = moduleIdCounter++;
+		moduleSolved = false;
+		keypad[0].OnInteract += delegate () { pressedKey(0); return false; };
+		keypad[1].OnInteract += delegate () { pressedKey(1); return false; };
+		keypad[2].OnInteract += delegate () { pressedKey(2); return false; };
+		keypad[3].OnInteract += delegate () { pressedKey(3); return false; };
+		keypad[4].OnInteract += delegate () { pressedKey(4); return false; };
+		keypad[5].OnInteract += delegate () { pressedKey(5); return false; };
+		keypad[6].OnInteract += delegate () { pressedKey(6); return false; };
+		keypad[7].OnInteract += delegate () { pressedKey(7); return false; };
+		keypad[8].OnInteract += delegate () { pressedKey(8); return false; };
+		keypad[9].OnInteract += delegate () { pressedKey(9); return false; };
+		clear.OnInteract += delegate () { pressClear(); return false; };
+		submit.OnInteract += delegate () { pressSubmit(); return false; };
+	}
+	void Start () 
+	{
+		TPscore = 0;
+		isSubmit = false;
+		submitScreen = "";
+		generatePuzzle();
+		getSolution();
+	}
+	void generatePuzzle()
+	{
+		number = UnityEngine.Random.Range(1, 10) + "";
+		int n = UnityEngine.Random.Range(0, 4);
+		colors = colorOrder[n] + "";
+		screen[0].color = textColors[n];
+		screen[0].text = number[0] + "";
+		for (int aa = 1; aa < screen.Length; aa++)
+		{
+			number =  number + "" + UnityEngine.Random.Range(0, 10);
+			n = UnityEngine.Random.Range(0, 4);
+			colors = colors + "" + colorOrder[n];
+			screen[aa].color = textColors[n];
+			screen[aa].text = number[aa] + "";
+		}
+	}
+	void getSolution()
+	{
+		Debug.LogFormat("[0 {0}] Generated Number: {1}", moduleId, number);
+		Debug.LogFormat("[0 {0}] Generated Colors: {1}", moduleId, colors);
+		string number2 = "";
+		for (int aa = 0; aa < number.Length; aa++)
+			number2 = number2 + "" + table[colorOrder.IndexOf(colors[aa])][aa];
+		Debug.LogFormat("[0 {0}] Number made from colors: {1}", moduleId, number2);
+		string newNumber = number + "";
+		for (int aa = 0; aa < number.Length; aa++)
+		{
+			if (number[aa] == number2[aa])
+			{
+				newNumber = number.Substring(aa);
+				break;
+			}
+		}
+		Debug.LogFormat("[0 {0}] Number Received: {1}", moduleId, newNumber);
+		while(number2.Length > 1)
+		{
+			int sum = 0;
+			for (int aa = 0; aa < number2.Length; aa++)
+				sum += (number2[aa] - '0');
+			number2 = sum + "";
+		}
+		Debug.LogFormat("[0 {0}] Digital Root of colors: {1}", moduleId, number2);
+		long num = (long.Parse(newNumber) * long.Parse(number2)) / 10;
+		Debug.LogFormat("[0 {0}] {1} * 0.{2} = {3}", moduleId, newNumber, number2, num);
+		solution = num + "";
+	}
+	void getScreen()
+	{
+		for (int aa = 0; aa < screen.Length; aa++)
+		{
+			if (aa < number.Length)
+			{
+				screen[aa].color = textColors[colorOrder.IndexOf(colors[aa])];
+				screen[aa].text = number[aa] + "";
+			}
+			else
+				screen[aa].text = "";
+		}
+	}
+	IEnumerator nextStage()
+	{
+		string temp = "CORRECT!!";
+		for (int aa = 0; aa < screen.Length; aa++)
+		{
+			screen[aa].text = temp[aa] + "";
+			screen[aa].color = Color.green;
+		}
+		yield return new WaitForSeconds(1.0f);
+		number = solution + "";
+		colors = "";
+		for (int aa = 0; aa < number.Length; aa++)
+			colors = colors + "" + colorOrder[UnityEngine.Random.Range(0, 4)];
+		getScreen();
+		getSolution();
+		submitScreen = "";
+		isSubmit = false;
+	}
+	IEnumerator strike()
+	{
+		yield return new WaitForSeconds(1.0f);
+		getScreen();
+		isSubmit = false;
+		submitScreen = "";
+	}
+	void pressedKey(int n)
+	{
+		if((!(moduleSolved)))
+		{
+			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+			if (!(isSubmit))
+			{
+				isSubmit = true;
+				for (int aa = 0; aa < screen.Length; aa++)
+				{
+					screen[aa].color = Color.white;
+					screen[aa].text = "";
+				}
+			}
+			if (submitScreen.Length < 9)
+			{
+				submitScreen = submitScreen + "" + n;
+				screen[submitScreen.Length - 1].text = n + "";
+			}
+		}
+	}
+	void pressClear()
+	{
+		if(!(moduleSolved))
+		{
+			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+			getScreen();
+			isSubmit = false;
+			submitScreen = "";
+		}
+	}
+	void pressSubmit()
+	{
+		if(!(moduleSolved))
+		{
+			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+			if (solution.Equals(submitScreen))
+			{
+				if (solution.Equals("0"))
+				{
+					solution = "SOLVED!!!";
+					for (int aa = 0; aa < screen.Length; aa++)
+					{
+						screen[aa].text = solution[aa] + "";
+						screen[aa].color = Color.white;
+					}
+					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
+					module.HandlePass();
+				}
+				else
+				{
+					TPscore += ((number.Length * 50) / 100) + 1;
+					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
+					StartCoroutine(nextStage());
+				}
+					
+			}
+			else
+			{
+				string temp = "INCORRECT";
+				for (int aa = 0; aa < screen.Length; aa++)
+				{
+					screen[aa].text = temp[aa] + "";
+					screen[aa].color = Color.red;
+				}
+				audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.Strike, transform);
+				module.HandleStrike();
+				StartCoroutine(strike());
+			}
+		}
+	}
+#pragma warning disable 414
+	private readonly string TwitchHelpMessage = @"!{0} submit|sub|s 1234567890 to submit the number.";
+#pragma warning restore 414
+	IEnumerator ProcessTwitchCommand(string command)
+	{
+		string[] param = command.Split(' ');
+		if ((Regex.IsMatch(param[0], @"^\s*submit\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*sub\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*s\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)) && param.Length > 1)
+		{
+			string check = "";
+			for (int aa = 1; aa < param.Length; aa++)
+				check = check + "" + param[aa];
+			bool flag = true;
+			for(int aa = 0; aa < check.Length; aa++)
+			{
+				if("0123456789".IndexOf(check[aa]) < 0)
+				{
+					flag = false;
+					break;
+				}
+			}
+			if (flag)
+			{
+				yield return null;
+				for (int aa = 0; aa < check.Length; aa++)
+				{
+					keypad[check[aa] - '0'].OnInteract();
+					yield return new WaitForSeconds(0.1f);
+				}
+				if (submitScreen.Equals("0") && solution.Equals("0"))
+					yield return "awardpoints " + TPscore;
+				submit.OnInteract();
+			}
+			else
+				yield break;
+		}
+		else
+			yield break;
+	}
+}
