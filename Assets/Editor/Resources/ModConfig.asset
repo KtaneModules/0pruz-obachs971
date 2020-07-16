@@ -14,7 +14,9 @@ MonoBehaviour:
   id: 0
   title: 0
   author: Sean, Pruz
-  description: 
+  description: 'Github: https://github.com/obachs971/0pruz
+
+    Temp Manual: http://66.195.8.98/~obachs971/Manuals/0.html'
   version: 1.0
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 692ed29d43c96344c9b34e9a53f25999, type: 3}
