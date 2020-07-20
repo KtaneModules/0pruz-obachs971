@@ -83,12 +83,12 @@ public class pruzZero : MonoBehaviour {
 	}
 	void getSolution()
 	{
-		Debug.LogFormat("[0 {0}] Generated Number: {1}", moduleId, number);
-		Debug.LogFormat("[0 {0}] Generated Colors: {1}", moduleId, colors);
+		Debug.LogFormat("[0 #{0}] Generated Number: {1}", moduleId, number);
+		Debug.LogFormat("[0 #{0}] Generated Colors: {1}", moduleId, colors);
 		string number2 = "";
 		for (int aa = 0; aa < number.Length; aa++)
 			number2 = number2 + "" + table[colorOrder.IndexOf(colors[aa])][aa];
-		Debug.LogFormat("[0 {0}] Number made from colors: {1}", moduleId, number2);
+		Debug.LogFormat("[0 #{0}] Number made from colors: {1}", moduleId, number2);
 		string newNumber = number + "";
 		for (int aa = 0; aa < number.Length; aa++)
 		{
@@ -98,7 +98,7 @@ public class pruzZero : MonoBehaviour {
 				break;
 			}
 		}
-		Debug.LogFormat("[0 {0}] Number Received: {1}", moduleId, newNumber);
+		Debug.LogFormat("[0 #{0}] Number Received: {1}", moduleId, newNumber);
 		while(number2.Length > 1)
 		{
 			int sum = 0;
@@ -106,9 +106,9 @@ public class pruzZero : MonoBehaviour {
 				sum += (number2[aa] - '0');
 			number2 = sum + "";
 		}
-		Debug.LogFormat("[0 {0}] Digital Root of colors: {1}", moduleId, number2);
+		Debug.LogFormat("[0 #{0}] Digital Root of colors: {1}", moduleId, number2);
 		long num = (long.Parse(newNumber) * long.Parse(number2)) / 10;
-		Debug.LogFormat("[0 {0}] {1} * 0.{2} = {3}", moduleId, newNumber, number2, num);
+		Debug.LogFormat("[0 #{0}] {1} * 0.{2} = {3}", moduleId, newNumber, number2, num);
 		solution = num + "";
 	}
 	void getScreen()
