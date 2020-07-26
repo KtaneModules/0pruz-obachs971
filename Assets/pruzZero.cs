@@ -18,7 +18,8 @@ public class pruzZero : MonoBehaviour {
 	public KMSelectable[] keypad;
 	public KMSelectable submit;
 	public KMSelectable clear;
-
+	public KMSelectable screenToggle;
+	public TextMesh colorBlindText;
 	private Color[] textColors =
 	{
 		Color.green,
@@ -34,6 +35,7 @@ public class pruzZero : MonoBehaviour {
 		new int[]{9, 7, 0, 4, 9, 6, 9, 5, 0},
 		new int[]{4, 5, 3, 2, 1, 2, 2, 7, 8}
 	};
+	private bool screenType;
 	private int TPscore;
 	private bool isSubmit;
 	private string submitScreen;
@@ -56,11 +58,13 @@ public class pruzZero : MonoBehaviour {
 		keypad[9].OnInteract += delegate () { pressedKey(9); return false; };
 		clear.OnInteract += delegate () { pressClear(); return false; };
 		submit.OnInteract += delegate () { pressSubmit(); return false; };
+		screenToggle.OnInteract += delegate () { pressScreen(); return false; };
 	}
 	void Start () 
 	{
 		TPscore = 0;
 		isSubmit = false;
+		screenType = false;
 		submitScreen = "";
 		generatePuzzle();
 		getSolution();
@@ -113,15 +117,69 @@ public class pruzZero : MonoBehaviour {
 	}
 	void getScreen()
 	{
-		for (int aa = 0; aa < screen.Length; aa++)
+		if(screenType)
 		{
-			if (aa < number.Length)
+			for (int aa = 0; aa < screen.Length; aa++)
 			{
-				screen[aa].color = textColors[colorOrder.IndexOf(colors[aa])];
-				screen[aa].text = number[aa] + "";
+				if (aa < number.Length)
+				{
+					screen[aa].color = Color.white;
+					screen[aa].text = number[aa] + "";
+					colorBlindText.text = colorBlindText.text + "" + colors[aa];
+				}
+				else
+					screen[aa].text = "";
 			}
-			else
-				screen[aa].text = "";
+		}
+		else
+		{
+			for (int aa = 0; aa < screen.Length; aa++)
+			{
+				if (aa < number.Length)
+				{
+					screen[aa].color = textColors[colorOrder.IndexOf(colors[aa])];
+					screen[aa].text = number[aa] + "";
+				}
+				else
+					screen[aa].text = "";
+			}
+		}
+	}
+	void pressScreen()
+	{
+		if (!(moduleSolved))
+		{
+			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+			if (!(isSubmit))
+			{
+				if (screenType)
+				{
+					for (int aa = 0; aa < screen.Length; aa++)
+					{
+						if (aa < number.Length)
+						{
+							screen[aa].color = textColors[colorOrder.IndexOf(colors[aa])];
+						}
+						else
+							screen[aa].text = "";
+					}
+					colorBlindText.text = "";
+				}
+				else
+				{
+					for (int aa = 0; aa < screen.Length; aa++)
+					{
+						if (aa < number.Length)
+						{
+							screen[aa].color = Color.white;
+							colorBlindText.text = colorBlindText.text + "" + colors[aa];
+						}
+						else
+							screen[aa].text = "";
+					}
+				}
+				screenType = !(screenType);
+			}
 		}
 	}
 	IEnumerator nextStage()
@@ -156,6 +214,7 @@ public class pruzZero : MonoBehaviour {
 			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
 			if (!(isSubmit))
 			{
+				colorBlindText.text = "";
 				isSubmit = true;
 				for (int aa = 0; aa < screen.Length; aa++)
 				{
@@ -174,10 +233,13 @@ public class pruzZero : MonoBehaviour {
 	{
 		if(!(moduleSolved))
 		{
-			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
-			getScreen();
-			isSubmit = false;
-			submitScreen = "";
+			if(isSubmit)
+            {
+				audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+				getScreen();
+				isSubmit = false;
+				submitScreen = "";
+			}
 		}
 	}
 	void pressSubmit()
@@ -200,7 +262,7 @@ public class pruzZero : MonoBehaviour {
 				}
 				else
 				{
-					TPscore += ((number.Length * 50) / 100) + 1;
+					TPscore += ((number.Length * 40) / 100) + 1;
 					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 					StartCoroutine(nextStage());
 				}
@@ -221,11 +283,16 @@ public class pruzZero : MonoBehaviour {
 		}
 	}
 #pragma warning disable 414
-	private readonly string TwitchHelpMessage = @"!{0} submit|sub|s 1234567890 to submit the number.";
+	private readonly string TwitchHelpMessage = @"!{0} screen to toggle color blind mode. !{0} submit|sub|s 1234567890 to submit the number.";
 #pragma warning restore 414
 	IEnumerator ProcessTwitchCommand(string command)
 	{
 		string[] param = command.Split(' ');
+		if ((Regex.IsMatch(param[0], @"^\s*screen\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*sub\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*s\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)) && param.Length > 1)
+		{
+			yield return new WaitForSeconds(0.1f);
+			screenToggle.OnInteract();
+		}
 		if ((Regex.IsMatch(param[0], @"^\s*submit\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*sub\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*s\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)) && param.Length > 1)
 		{
 			string check = "";
@@ -240,6 +307,8 @@ public class pruzZero : MonoBehaviour {
 					break;
 				}
 			}
+			if (check.Length > 9)
+				flag = false;
 			if (flag)
 			{
 				yield return null;
