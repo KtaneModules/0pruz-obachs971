@@ -62,6 +62,7 @@ public class pruzZero : MonoBehaviour {
 	}
 	void Start () 
 	{
+		Debug.LogFormat("[0 #{0}] Starting up module", moduleId);
 		TPscore = 0;
 		isSubmit = false;
 		screenType = false;
@@ -318,7 +319,7 @@ public class pruzZero : MonoBehaviour {
 					yield return new WaitForSeconds(0.1f);
 				}
 				if (submitScreen.Equals("0") && solution.Equals("0"))
-					yield return "awardpoints " + TPscore;
+					yield return "awardpointsonsolve " + TPscore;
 				submit.OnInteract();
 			}
 			else
