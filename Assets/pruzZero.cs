@@ -250,6 +250,7 @@ public class pruzZero : MonoBehaviour {
 			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
 			if (solution.Equals(submitScreen))
 			{
+				TPscore += ((number.Length * 40) / 100) + 1;
 				if (solution.Equals("0"))
 				{
 					solution = "SOLVED!!!";
@@ -263,7 +264,6 @@ public class pruzZero : MonoBehaviour {
 				}
 				else
 				{
-					TPscore += ((number.Length * 40) / 100) + 1;
 					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 					StartCoroutine(nextStage());
 				}
@@ -289,12 +289,12 @@ public class pruzZero : MonoBehaviour {
 	IEnumerator ProcessTwitchCommand(string command)
 	{
 		string[] param = command.Split(' ');
-		if ((Regex.IsMatch(param[0], @"^\s*screen\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*sub\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*s\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)) && param.Length > 1)
+		if (param.Length == 1 && (Regex.IsMatch(param[0], @"^\s*screen\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)))
 		{
 			yield return new WaitForSeconds(0.1f);
 			screenToggle.OnInteract();
 		}
-		if ((Regex.IsMatch(param[0], @"^\s*submit\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*sub\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*s\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)) && param.Length > 1)
+		else if ((Regex.IsMatch(param[0], @"^\s*submit\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*sub\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || Regex.IsMatch(param[0], @"^\s*s\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)) && param.Length > 1)
 		{
 			string check = "";
 			for (int aa = 1; aa < param.Length; aa++)
