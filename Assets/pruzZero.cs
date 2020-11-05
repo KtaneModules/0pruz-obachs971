@@ -248,8 +248,10 @@ public class pruzZero : MonoBehaviour {
 		if(!(moduleSolved))
 		{
 			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+			Debug.LogFormat("[0 #{0}] You entered: {1}", moduleId, submitScreen);
 			if (solution.Equals(submitScreen))
 			{
+				Debug.LogFormat("[0 #{0}] That is correct!", moduleId);
 				TPscore += ((number.Length * 40) / 100) + 1;
 				if (solution.Equals("0"))
 				{
@@ -271,6 +273,7 @@ public class pruzZero : MonoBehaviour {
 			}
 			else
 			{
+				Debug.LogFormat("[0 #{0}] I was expecting {1}", moduleId, solution);
 				string temp = "INCORRECT";
 				for (int aa = 0; aa < screen.Length; aa++)
 				{
@@ -319,7 +322,10 @@ public class pruzZero : MonoBehaviour {
 					yield return new WaitForSeconds(0.1f);
 				}
 				if (submitScreen.Equals("0") && solution.Equals("0"))
+                {
+					TPscore += ((number.Length * 40) / 100) + 1;
 					yield return "awardpointsonsolve " + TPscore;
+				}
 				submit.OnInteract();
 			}
 			else
