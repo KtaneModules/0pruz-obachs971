@@ -247,42 +247,45 @@ public class pruzZero : MonoBehaviour {
 	{
 		if(!(moduleSolved))
 		{
-			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
-			Debug.LogFormat("[0 #{0}] You entered: {1}", moduleId, submitScreen);
-			if (solution.Equals(submitScreen))
+			if(isSubmit)
 			{
-				Debug.LogFormat("[0 #{0}] That is correct!", moduleId);
-				TPscore += ((number.Length * 40) / 100) + 1;
-				if (solution.Equals("0"))
+				audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+				Debug.LogFormat("[0 #{0}] You entered: {1}", moduleId, submitScreen);
+				if (solution.Equals(submitScreen))
 				{
-					solution = "SOLVED!!!";
-					for (int aa = 0; aa < screen.Length; aa++)
+					Debug.LogFormat("[0 #{0}] That is correct!", moduleId);
+					TPscore += ((number.Length * 34) / 100) + 1;
+					if (solution.Equals("0"))
 					{
-						screen[aa].text = solution[aa] + "";
-						screen[aa].color = Color.white;
+						solution = "SOLVED!!!";
+						for (int aa = 0; aa < screen.Length; aa++)
+						{
+							screen[aa].text = solution[aa] + "";
+							screen[aa].color = Color.white;
+						}
+						audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
+						module.HandlePass();
 					}
-					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
-					module.HandlePass();
+					else
+					{
+						audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
+						StartCoroutine(nextStage());
+					}
+
 				}
 				else
 				{
-					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
-					StartCoroutine(nextStage());
+					Debug.LogFormat("[0 #{0}] I was expecting {1}", moduleId, solution);
+					string temp = "INCORRECT";
+					for (int aa = 0; aa < screen.Length; aa++)
+					{
+						screen[aa].text = temp[aa] + "";
+						screen[aa].color = Color.red;
+					}
+					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.Strike, transform);
+					module.HandleStrike();
+					StartCoroutine(strike());
 				}
-					
-			}
-			else
-			{
-				Debug.LogFormat("[0 #{0}] I was expecting {1}", moduleId, solution);
-				string temp = "INCORRECT";
-				for (int aa = 0; aa < screen.Length; aa++)
-				{
-					screen[aa].text = temp[aa] + "";
-					screen[aa].color = Color.red;
-				}
-				audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.Strike, transform);
-				module.HandleStrike();
-				StartCoroutine(strike());
 			}
 		}
 	}
@@ -323,7 +326,7 @@ public class pruzZero : MonoBehaviour {
 				}
 				if (submitScreen.Equals("0") && solution.Equals("0"))
                 {
-					TPscore += ((number.Length * 40) / 100) + 1;
+					TPscore += ((number.Length * 34) / 100) + 1;
 					yield return "awardpointsonsolve " + TPscore;
 				}
 				submit.OnInteract();
