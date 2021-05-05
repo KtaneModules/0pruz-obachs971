@@ -38,6 +38,7 @@ public class pruzZero : MonoBehaviour {
 	private bool screenType;
 	private int TPscore;
 	private bool isSubmit;
+	private bool animating;
 	private string submitScreen;
 	private string number;
 	private string colors;
@@ -148,9 +149,9 @@ public class pruzZero : MonoBehaviour {
 	}
 	void pressScreen()
 	{
-		if (!(moduleSolved))
+		if (!(moduleSolved) && !animating)
 		{
-			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, screenToggle.transform);
 			if (!(isSubmit))
 			{
 				if (screenType)
@@ -185,6 +186,7 @@ public class pruzZero : MonoBehaviour {
 	}
 	IEnumerator nextStage()
 	{
+		animating = true;
 		string temp = "CORRECT!!";
 		for (int aa = 0; aa < screen.Length; aa++)
 		{
@@ -200,19 +202,22 @@ public class pruzZero : MonoBehaviour {
 		getSolution();
 		submitScreen = "";
 		isSubmit = false;
+		animating = false;
 	}
 	IEnumerator strike()
 	{
+		animating = true;
 		yield return new WaitForSeconds(1.0f);
 		getScreen();
 		isSubmit = false;
 		submitScreen = "";
+		animating = false;
 	}
 	void pressedKey(int n)
 	{
-		if((!(moduleSolved)))
+		if(!(moduleSolved) && !animating)
 		{
-			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+			audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, keypad[n].transform);
 			if (!(isSubmit))
 			{
 				colorBlindText.text = "";
@@ -232,11 +237,11 @@ public class pruzZero : MonoBehaviour {
 	}
 	void pressClear()
 	{
-		if(!(moduleSolved))
+		if(!(moduleSolved) && !animating)
 		{
 			if(isSubmit)
             {
-				audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+				audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, clear.transform);
 				getScreen();
 				isSubmit = false;
 				submitScreen = "";
@@ -245,11 +250,11 @@ public class pruzZero : MonoBehaviour {
 	}
 	void pressSubmit()
 	{
-		if(!(moduleSolved))
+		if(!(moduleSolved) && !animating)
 		{
 			if(isSubmit)
 			{
-				audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+				audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, submit.transform);
 				Debug.LogFormat("[0 #{0}] You entered: {1}", moduleId, submitScreen);
 				if (solution.Equals(submitScreen))
 				{
@@ -265,6 +270,7 @@ public class pruzZero : MonoBehaviour {
 						}
 						audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 						module.HandlePass();
+						moduleSolved = true;
 					}
 					else
 					{
@@ -289,9 +295,10 @@ public class pruzZero : MonoBehaviour {
 			}
 		}
 	}
-#pragma warning disable 414
+
+	#pragma warning disable 414
 	private readonly string TwitchHelpMessage = @"!{0} screen to toggle color blind mode. !{0} submit|sub|s 1234567890 to submit the number.";
-#pragma warning restore 414
+	#pragma warning restore 414
 	IEnumerator ProcessTwitchCommand(string command)
 	{
 		string[] param = command.Split(' ');
@@ -336,5 +343,39 @@ public class pruzZero : MonoBehaviour {
 		}
 		else
 			yield break;
+	}
+
+	IEnumerator TwitchHandleForcedSolve()
+    {
+		while (!moduleSolved)
+        {
+			while (animating) yield return true;
+			if (submitScreen.Length > solution.Length)
+			{
+				clear.OnInteract();
+				yield return new WaitForSeconds(0.1f);
+			}
+			else
+			{
+				for (int i = 0; i < submitScreen.Length; i++)
+				{
+					if (i == solution.Length)
+						break;
+					if (submitScreen[i] != solution[i])
+					{
+						clear.OnInteract();
+						yield return new WaitForSeconds(0.1f);
+						break;
+					}
+				}
+			}
+			string sub = solution.Substring(submitScreen.Length);
+			for (int aa = 0; aa < sub.Length; aa++)
+			{
+				keypad[sub[aa] - '0'].OnInteract();
+				yield return new WaitForSeconds(0.1f);
+			}
+			submit.OnInteract();
+		}
 	}
 }
