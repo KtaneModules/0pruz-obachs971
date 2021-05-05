@@ -253,6 +253,7 @@ public class pruzZero : MonoBehaviour {
 				Debug.LogFormat("[0 #{0}] You entered: {1}", moduleId, submitScreen);
 				if (solution.Equals(submitScreen))
 				{
+					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 					Debug.LogFormat("[0 #{0}] That is correct!", moduleId);
 					TPscore += ((number.Length * 34) / 100) + 1;
 					if (solution.Equals("0"))
@@ -263,15 +264,10 @@ public class pruzZero : MonoBehaviour {
 							screen[aa].text = solution[aa] + "";
 							screen[aa].color = Color.white;
 						}
-						audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 						module.HandlePass();
 					}
 					else
-					{
-						audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 						StartCoroutine(nextStage());
-					}
-
 				}
 				else
 				{
@@ -282,7 +278,6 @@ public class pruzZero : MonoBehaviour {
 						screen[aa].text = temp[aa] + "";
 						screen[aa].color = Color.red;
 					}
-					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.Strike, transform);
 					module.HandleStrike();
 					StartCoroutine(strike());
 				}
