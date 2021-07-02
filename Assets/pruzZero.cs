@@ -41,8 +41,9 @@ public class pruzZero : MonoBehaviour {
 	private bool animating;
 	private string submitScreen;
 	private string number;
-	private string colors;
-	private string solution;
+	private ArrayList solutions;
+	private ArrayList colorList;
+	private int currentStage;
 	void Awake()
 	{
 		moduleId = moduleIdCounter++;
@@ -69,13 +70,12 @@ public class pruzZero : MonoBehaviour {
 		screenType = false;
 		submitScreen = "";
 		generatePuzzle();
-		getSolution();
 	}
 	void generatePuzzle()
 	{
 		number = UnityEngine.Random.Range(1, 10) + "";
 		int n = UnityEngine.Random.Range(0, 4);
-		colors = colorOrder[n] + "";
+		string colors = colorOrder[n] + "";
 		screen[0].color = textColors[n];
 		screen[0].text = number[0] + "";
 		for (int aa = 1; aa < screen.Length; aa++)
@@ -86,9 +86,28 @@ public class pruzZero : MonoBehaviour {
 			screen[aa].color = textColors[n];
 			screen[aa].text = number[aa] + "";
 		}
+		solutions = new ArrayList();
+		colorList = new ArrayList();
+		currentStage = 0;
+		colorList.Add(colors.ToUpperInvariant());
+		solutions.Add(getSolution(number, colors, 1));
+		
+		while(!((string)solutions[solutions.Count - 1]).Equals("0"))
+		{
+			colors = "";
+			for (int aa = 0; aa < ((string)solutions[solutions.Count - 1]).Length; aa++)
+			{
+				n = UnityEngine.Random.Range(0, 4);
+				colors = colors + "" + colorOrder[n];
+			}
+			colorList.Add(colors.ToUpperInvariant());
+			solutions.Add(getSolution((string)solutions[solutions.Count - 1], colors, solutions.Count + 1));
+		}
+		getScreen();	
 	}
-	void getSolution()
+	string getSolution(string number, string colors, int stage)
 	{
+		Debug.LogFormat("[0 #{0}] Stage #{1}", moduleId, stage);
 		Debug.LogFormat("[0 #{0}] Generated Number: {1}", moduleId, number);
 		Debug.LogFormat("[0 #{0}] Generated Colors: {1}", moduleId, colors);
 		string number2 = "";
@@ -115,7 +134,8 @@ public class pruzZero : MonoBehaviour {
 		Debug.LogFormat("[0 #{0}] Digital Root of colors: {1}", moduleId, number2);
 		long num = (long.Parse(newNumber) * long.Parse(number2)) / 10;
 		Debug.LogFormat("[0 #{0}] {1} * 0.{2} = {3}", moduleId, newNumber, number2, num);
-		solution = num + "";
+		string solution = num + "";
+		return solution;
 	}
 	void getScreen()
 	{
@@ -127,7 +147,7 @@ public class pruzZero : MonoBehaviour {
 				{
 					screen[aa].color = Color.white;
 					screen[aa].text = number[aa] + "";
-					colorBlindText.text = colorBlindText.text + "" + colors[aa];
+					colorBlindText.text = colorBlindText.text + "" + ((string)colorList[currentStage])[aa];
 				}
 				else
 					screen[aa].text = "";
@@ -139,7 +159,7 @@ public class pruzZero : MonoBehaviour {
 			{
 				if (aa < number.Length)
 				{
-					screen[aa].color = textColors[colorOrder.IndexOf(colors[aa])];
+					screen[aa].color = textColors[colorOrder.IndexOf(((string)colorList[currentStage])[aa])];
 					screen[aa].text = number[aa] + "";
 				}
 				else
@@ -160,7 +180,7 @@ public class pruzZero : MonoBehaviour {
 					{
 						if (aa < number.Length)
 						{
-							screen[aa].color = textColors[colorOrder.IndexOf(colors[aa])];
+							screen[aa].color = textColors[colorOrder.IndexOf(((string)colorList[currentStage])[aa])];
 						}
 						else
 							screen[aa].text = "";
@@ -174,7 +194,7 @@ public class pruzZero : MonoBehaviour {
 						if (aa < number.Length)
 						{
 							screen[aa].color = Color.white;
-							colorBlindText.text = colorBlindText.text + "" + colors[aa];
+							colorBlindText.text = colorBlindText.text + "" + ((string)colorList[currentStage])[aa];
 						}
 						else
 							screen[aa].text = "";
@@ -194,12 +214,9 @@ public class pruzZero : MonoBehaviour {
 			screen[aa].color = Color.green;
 		}
 		yield return new WaitForSeconds(1.0f);
-		number = solution + "";
-		colors = "";
-		for (int aa = 0; aa < number.Length; aa++)
-			colors = colors + "" + colorOrder[UnityEngine.Random.Range(0, 4)];
+		number = (string)solutions[currentStage];
+		currentStage++;
 		getScreen();
-		getSolution();
 		submitScreen = "";
 		isSubmit = false;
 		animating = false;
@@ -256,17 +273,17 @@ public class pruzZero : MonoBehaviour {
 			{
 				audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, submit.transform);
 				Debug.LogFormat("[0 #{0}] You entered: {1}", moduleId, submitScreen);
-				if (solution.Equals(submitScreen))
+				if (submitScreen.Equals((string)solutions[currentStage]))
 				{
 					audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 					Debug.LogFormat("[0 #{0}] That is correct!", moduleId);
 					TPscore += ((number.Length * 34) / 100) + 1;
-					if (solution.Equals("0"))
+					if (submitScreen.Equals("0"))
 					{
-						solution = "SOLVED!!!";
+						submitScreen = "SOLVED!!!";
 						for (int aa = 0; aa < screen.Length; aa++)
 						{
-							screen[aa].text = solution[aa] + "";
+							screen[aa].text = submitScreen[aa] + "";
 							screen[aa].color = Color.white;
 						}
 						module.HandlePass();
@@ -277,7 +294,7 @@ public class pruzZero : MonoBehaviour {
 				}
 				else
 				{
-					Debug.LogFormat("[0 #{0}] I was expecting {1}", moduleId, solution);
+					Debug.LogFormat("[0 #{0}] I was expecting {1}", moduleId, (string)solutions[currentStage]);
 					string temp = "INCORRECT";
 					for (int aa = 0; aa < screen.Length; aa++)
 					{
@@ -326,7 +343,7 @@ public class pruzZero : MonoBehaviour {
 					keypad[check[aa] - '0'].OnInteract();
 					yield return new WaitForSeconds(0.1f);
 				}
-				if (submitScreen.Equals("0") && solution.Equals("0"))
+				if (submitScreen.Equals("0") && ((string)solutions[currentStage]).Equals("0"))
                 {
 					TPscore += ((number.Length * 34) / 100) + 1;
 					yield return "awardpointsonsolve " + TPscore;
@@ -345,7 +362,7 @@ public class pruzZero : MonoBehaviour {
 		while (!moduleSolved)
         {
 			while (animating) yield return true;
-			if (submitScreen.Length > solution.Length)
+			if (submitScreen.Length > ((string)solutions[currentStage]).Length)
 			{
 				clear.OnInteract();
 				yield return new WaitForSeconds(0.1f);
@@ -354,9 +371,9 @@ public class pruzZero : MonoBehaviour {
 			{
 				for (int i = 0; i < submitScreen.Length; i++)
 				{
-					if (i == solution.Length)
+					if (i == ((string)solutions[currentStage]).Length)
 						break;
-					if (submitScreen[i] != solution[i])
+					if (submitScreen[i] != ((string)solutions[currentStage])[i])
 					{
 						clear.OnInteract();
 						yield return new WaitForSeconds(0.1f);
@@ -364,7 +381,7 @@ public class pruzZero : MonoBehaviour {
 					}
 				}
 			}
-			string sub = solution.Substring(submitScreen.Length);
+			string sub = ((string)solutions[currentStage]).Substring(submitScreen.Length);
 			for (int aa = 0; aa < sub.Length; aa++)
 			{
 				keypad[sub[aa] - '0'].OnInteract();
